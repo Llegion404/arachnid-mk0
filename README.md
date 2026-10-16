@@ -45,14 +45,6 @@ the lens, then walks itself back to the pad.
 - **Visible mechanisms.** Servo drum at each coxa, a nine-tooth sprocket with an
   index mark outboard of each knee driven by the knee angle, and a chrome ram
   sliding through a fixed sleeve on every shin.
-- **Sensor head.** A wedge skull (the front face of the box is pulled in
-  programmatically) under a two-plate brow pitched into a scowl, with a crest
-  blade between the brows. The optics are two blade-shaped slits set into a
-  recessed black band — they narrow to a third of their height when the unit
-  stalks and snap wide when it turns hostile — plus an eight-lens arachnid
-  cluster of pinprick pupils. The mouth is a grille cage over a glowing throat,
-  and four chelicerae (a barbed fang plus an outer claw per side) splay open
-  together on attack.
 - **Scanner pod.** A bolted turret on the thorax deck that slews in discrete
   steps on a fixed grid, sweeping the room on a timer and locking forward when
   the unit goes hostile, with a lens flare on every new target.

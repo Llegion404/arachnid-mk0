@@ -376,7 +376,6 @@ export class Spider {
     this.mandible = 0;
     this.mandibleTarget = 0;
     this.mandiblePulse = 0;
-    this.squint = 1; // vertical gain on the primary slits
 
     this.autopilot = false;
     this.autoResume = false;
@@ -526,196 +525,97 @@ export class Spider {
     shell.add(head);
     this.head = head;
 
-    // wedge skull: the front face of the box is pulled in hard so the mask
-    // reads as a pointed prow instead of a friendly brick
     const headGeo = new THREE.BoxGeometry(0.235, 0.145, 0.18);
-    {
-      const p = headGeo.attributes.position;
-      for (let i = 0; i < p.count; i++) {
-        if (p.getZ(i) > 0.01) {
-          p.setX(i, p.getX(i) * 0.6);
-          p.setY(i, p.getY(i) * 0.86 - 0.006);
-        }
-      }
-      p.needsUpdate = true;
-      headGeo.computeVertexNormals();
-    }
     const headMesh = new THREE.Mesh(headGeo, MAT.shell);
     headMesh.castShadow = true;
     headMesh.add(new THREE.LineSegments(edgeOf(headGeo), MAT.edge));
     head.add(headMesh);
 
-    // heavy brow: two plates pitched into a V, deep enough to throw the
-    // sensor band below into shadow
-    for (const s of [-1, 1]) {
-      const browGeo = new THREE.BoxGeometry(0.125, 0.034, 0.168);
-      const brow = new THREE.Mesh(browGeo, MAT.plate);
-      brow.position.set(0.055 * s, 0.072, 0.014);
-      brow.rotation.x = -0.26;
-      brow.rotation.z = 0.3 * s;
-      brow.castShadow = true;
-      brow.add(new THREE.LineSegments(edgeOf(browGeo), MAT.edgeDim));
-      head.add(brow);
-    }
+    // hooded brow — throws the eye cluster into shadow
+    const browGeo = new THREE.BoxGeometry(0.25, 0.05, 0.17);
+    const brow = new THREE.Mesh(browGeo, MAT.plate);
+    brow.position.set(0, 0.082, 0.0);
+    brow.rotation.x = -0.24;
+    brow.castShadow = true;
+    brow.add(new THREE.LineSegments(edgeOf(browGeo), MAT.edgeDim));
+    head.add(brow);
 
-    // crest blade between the brows, pitched forward over the optics
-    const crest = new THREE.Mesh(new THREE.ConeGeometry(0.026, 0.13, 4), MAT.spike);
-    crest.position.set(0, 0.052, 0.045);
-    crest.rotation.x = Math.PI * 0.62;
-    crest.castShadow = true;
-    head.add(crest);
-
-    // cheek plates, pushed back to follow the taper; they carry the gauge
+    // cheek plates
     for (const s of [-1, 1]) {
       const cheek = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.115, 0.145), MAT.plate);
-      cheek.position.set(0.118 * s, -0.008, -0.02);
+      cheek.position.set(0.118 * s, -0.008, 0.0);
       cheek.rotation.z = 0.1 * s;
       cheek.castShadow = true;
       head.add(cheek);
     }
 
-    // sensor band: a recessed monolith with the light inside it, not a
-    // glowing strip across the face
-    const bandGeo = new THREE.BoxGeometry(0.148, 0.055, 0.015);
-    const band = new THREE.Mesh(bandGeo, MAT.dark);
-    band.position.set(0, 0.022, 0.085);
-    band.add(new THREE.LineSegments(edgeOf(bandGeo), MAT.edgeDim));
-    head.add(band);
+    // sensor visor
+    this.visorMat = new THREE.MeshBasicMaterial({ color: 0xff2a10 });
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.042, 0.03), this.visorMat);
+    visor.position.set(0, 0.0, 0.088);
+    head.add(visor);
 
-    // primary optics: two slits cut into the band, angled into a scowl
-    this.eyeMat = new THREE.MeshBasicMaterial({ color: 0xff2a0a });
-    this.slits = [];
-    for (const s of [-1, 1]) {
-      const housingGeo = new THREE.BoxGeometry(0.064, 0.018, 0.012);
-      const housing = new THREE.Mesh(housingGeo, MAT.dark);
-      housing.position.set(0.039 * s, 0.034, 0.094);
-      housing.rotation.z = 0.32 * s;
-      head.add(housing);
-
-      // blade-shaped slit: thins towards the nose so the glare reads as a
-      // scowl rather than a friendly bar
-      const slitGeo = new THREE.BoxGeometry(0.058, 0.012, 0.01);
-      const sp = slitGeo.attributes.position;
-      for (let i = 0; i < sp.count; i++) {
-        if (sp.getX(i) * s < 0) sp.setY(i, sp.getY(i) * 0.42);
-      }
-      sp.needsUpdate = true;
-      slitGeo.computeVertexNormals();
-
-      const slit = new THREE.Mesh(slitGeo, this.eyeMat);
-      slit.position.set(0, 0, 0.004);
-      housing.add(slit);
-      this.slits.push(slit);
-    }
-
-    // arachnid secondary cluster: eight pinprick optics under the slits.
-    // Deliberately tiny and cold — the glare belongs to the slits.
+    // eye cluster — 8 lenses, sizes/positions straight off a real arachnid.
+    // Dark glass lens + a tiny saturated iris: reads as a hot pinprick rather
+    // than a glowing ball, and stays red instead of blowing out to white.
     this.lensMat = new THREE.MeshStandardMaterial({
       color: 0x07030a,
       metalness: 0.95,
       roughness: 0.07,
       envMapIntensity: 1.3,
     });
-    this.pupilMat = new THREE.MeshBasicMaterial({ color: 0x3a0602 });
-    const pupils = [
-      [0.012, 0.008, 0.0058],
-      [0.034, 0.011, 0.0066],
-      [0.056, 0.006, 0.0054],
-      [0.048, -0.003, 0.0046],
+    this.eyeMat = new THREE.MeshBasicMaterial({ color: 0xff2a0a });
+    const eyes = [
+      [0.058, 0.024, 0.092, 0.0185],
+      [0.112, 0.004, 0.048, 0.0125],
+      [0.030, -0.016, 0.095, 0.0095],
+      [0.072, -0.038, 0.082, 0.0078],
     ];
-    for (const [x, y, r] of pupils) {
+    for (const [x, y, z, r] of eyes) {
       for (const s of [-1, 1]) {
-        const p = new THREE.Vector3(x * s, y, 0.0955);
+        const p = new THREE.Vector3(x * s, y, z);
         const lens = new THREE.Mesh(GEO.eye, this.lensMat);
         lens.position.copy(p);
-        lens.scale.setScalar(r * 1.5);
+        lens.scale.setScalar(r);
         head.add(lens);
 
-        const pupil = new THREE.Mesh(GEO.eye, this.pupilMat);
-        const n = p.clone().sub(new THREE.Vector3(0, 0.02, 0.04)).normalize();
-        pupil.position.copy(p).addScaledVector(n, r * 1.05);
-        pupil.scale.setScalar(r * 0.5);
-        head.add(pupil);
+        const iris = new THREE.Mesh(GEO.eye, this.eyeMat);
+        const n = p.clone().sub(new THREE.Vector3(0, 0.012, -0.012)).normalize();
+        iris.position.copy(p).addScaledVector(n, r * 0.66);
+        iris.scale.setScalar(r * 0.42);
+        head.add(iris);
       }
     }
 
-    // mouth: a caged furnace behind the fangs instead of a smile
-    this.throatMat = new THREE.MeshBasicMaterial({ color: 0x2a0400 });
-    const throat = new THREE.Mesh(new THREE.BoxGeometry(0.128, 0.05, 0.01), this.throatMat);
-    throat.position.set(0, -0.04, 0.076);
-    head.add(throat);
-
-    const grille = new THREE.BoxGeometry(0.009, 0.05, 0.018);
-    for (let i = -3; i <= 3; i++) {
-      const bar = new THREE.Mesh(grille, i === 0 ? MAT.joint : MAT.chrome);
-      bar.position.set(i * 0.019, -0.04, 0.084);
-      bar.rotation.x = -0.14;
-      bar.castShadow = true;
-      head.add(bar);
-    }
-
     this.eyeLight = new THREE.PointLight(0xff2400, 0.55, 1.8, 1);
-    this.eyeLight.position.set(0, -0.052, 0.1);
+    this.eyeLight.position.set(0, 0, 0.14);
     head.add(this.eyeLight);
 
-    /* --- chelicerae: barbed fangs plus a second pair of outer claws ----- */
+    /* --- chelicerae ---------------------------------------------------- */
     this.mandibles = [];
-    this.claws = [];
     for (const s of [-1, 1]) {
-      /* inner arm — the fang */
       const m = new THREE.Group();
-      m.position.set(0.062 * s, -0.055, 0.05);
+      m.position.set(0.078 * s, -0.062, 0.055);
       m.rotation.x = 0.22;
       head.add(m);
 
-      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.044, 0.16), MAT.limb);
-      arm.position.set(0, 0, 0.08);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.046, 0.046, 0.15), MAT.limb);
+      arm.position.set(0, 0, 0.072);
       arm.castShadow = true;
       m.add(arm);
 
-      const fang = new THREE.Mesh(new THREE.ConeGeometry(0.019, 0.15, 4), MAT.spike);
-      fang.position.set(0, -0.03, 0.16);
-      fang.rotation.x = Math.PI * 0.8;
+      const fang = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.105, 4), MAT.spike);
+      fang.position.set(0, -0.026, 0.152);
+      fang.rotation.x = Math.PI * 0.78;
       fang.castShadow = true;
       m.add(fang);
 
-      // secondary barb off the fang shaft: hooks that catch the light
-      const barb = new THREE.Mesh(GEO.spike, MAT.spike);
-      alignCone(barb, _v1.set(0.006 * s, -0.042, 0.172), _v2.set(0.3 * s, -0.62, 0.72).normalize(), 0.06);
-      barb.castShadow = true;
-      m.add(barb);
-
       const tip = new THREE.Mesh(GEO.bead, this.beadMat);
-      tip.position.set(0, -0.096, 0.208);
+      tip.position.set(0, -0.062, 0.178);
       m.add(tip);
 
+      head.add(m);
       this.mandibles.push(m);
-
-      /* outer claw — splays wide and opens the cage */
-      const claw = new THREE.Group();
-      claw.position.set(0.122 * s, -0.032, 0.014);
-      claw.rotation.y = 0.34 * s;
-      claw.rotation.x = 0.16;
-      claw.userData.side = s;
-      head.add(claw);
-
-      const cArm = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.05, 0.115), MAT.limb);
-      cArm.position.set(0, 0, 0.05);
-      cArm.castShadow = true;
-      claw.add(cArm);
-
-      const hook = new THREE.Mesh(new THREE.ConeGeometry(0.017, 0.115, 4), MAT.spike);
-      hook.position.set(0, -0.026, 0.115);
-      hook.rotation.x = Math.PI * 0.72;
-      hook.rotation.z = -0.28 * s;
-      hook.castShadow = true;
-      claw.add(hook);
-
-      const clawTip = new THREE.Mesh(GEO.bead, this.beadMat);
-      clawTip.position.set(0, -0.07, 0.161);
-      claw.add(clawTip);
-
-      this.claws.push(claw);
     }
 
     /* --- pedipalps (the twitchy little feelers) ------------------------ */
@@ -726,12 +626,11 @@ export class Spider {
       p.rotation.y = 0.45 * s;
       p.rotation.x = -0.15;
       head.add(p);
-      const rod = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.015, 0.27), MAT.limb);
-      rod.position.set(0, 0, 0.135);
+      const rod = new THREE.Mesh(new THREE.BoxGeometry(0.017, 0.017, 0.26), MAT.limb);
+      rod.position.set(0, 0, 0.13);
       p.add(rod);
-      // needle tips: feelers should read as probes, not antennae balls
-      const ll = new THREE.Mesh(GEO.spike, MAT.spike);
-      alignCone(ll, _v1.set(0, 0, 0.268), _v2.set(0, 0, 1), 0.035);
+      const ll = new THREE.Mesh(GEO.bead, this.beadMat);
+      ll.position.set(0, 0, 0.265);
       p.add(ll);
       this.palps.push(p);
     }
@@ -1646,24 +1545,6 @@ export class Spider {
     this.mandibles[1].rotation.y = -mo * 0.4;
     this.mandibles[0].rotation.x = 0.22 + mo * 0.12;
     this.mandibles[1].rotation.x = 0.22 + mo * 0.12;
-    // the outer claws splay wider than the fangs — the whole cage opens
-    for (const c of this.claws) {
-      const s = c.userData.side;
-      c.rotation.y = (0.34 + mo * 0.85) * s;
-      c.rotation.x = 0.16 + mo * 0.22;
-    }
-
-    /* primary slits: narrow to a killing squint when locked on, snap wide
-     * when the unit goes hostile */
-    const squint =
-      this.state === 'STALK'
-        ? 0.32
-        : this.state === 'THREAT' || this.state === 'ATTACK' || this.state === 'SCARE'
-          ? 1.5
-          : 1;
-    this.squint += (squint - this.squint) * damp(dt, 6);
-    this.slits[0].scale.y = this.squint;
-    this.slits[1].scale.y = this.squint;
 
     /* twitchy pedipalps */
     const tw = Math.sin(this.time * 3.1) * 0.06 + Math.sin(this.time * 11.7) * 0.02 * (1 + this.energy);
@@ -1696,8 +1577,7 @@ export class Spider {
       clamp((0.002 + e * 0.035) * f, 0, 1),
       0.008
     );
-    this.throatMat.color.setRGB(clamp(0.03 + e * 0.26 * f + flare * 0.42, 0, 1.05), 0.012, 0.006);
-    this.pupilMat.color.setRGB(clamp((0.05 + e * 0.3) * f + flare * 0.25, 0, 1), 0.012, 0.006);
+    this.visorMat.color.setRGB(clamp(0.035 + e * 0.4 * f, 0, 1.1), 0.016, 0.008);
     this.underGlow.intensity = Math.min(1.9, (0.16 + e * 1.25) * f + flare * 1.1);
     this.eyeLight.intensity = (0.1 + e * 0.42) * f + flare * 0.9;
   }
