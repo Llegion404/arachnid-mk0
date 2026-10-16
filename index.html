@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>ARACHNID MK-0 // prototype</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%2304050a'/><circle cx='8' cy='8' r='4' fill='%23ff2a10'/></svg>" />
+<link rel="stylesheet" href="./css/style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three/three.module.js",
+    "three/addons/": "./vendor/three/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+
+<div id="hud">
+  <header id="title">
+    <h1>ARACHNID <em>MK-0</em></h1>
+    <p class="sub">PROTOTYPE UNIT &middot; CONTAINMENT&nbsp;BREACHED</p>
+  </header>
+
+  <div id="readout">
+    <div><span>STATE</span><b id="r-state">STANDBY</b></div>
+    <div><span>VELOCITY</span><b id="r-speed">0.00</b></div>
+    <div><span>CORE</span><b id="r-core">000%</b></div>
+    <div><span>SERVO BUS</span><b id="r-servo">0/s</b></div>
+    <div><span>RANGE</span><b id="r-dist">0.0m</b></div>
+  </div>
+
+  <nav id="controls">
+    <div class="row">
+      <button type="button" data-cmd="idle">Idle</button>
+      <button type="button" data-cmd="walk">Walk</button>
+      <button type="button" data-cmd="stalk">Stalk</button>
+      <button type="button" data-cmd="threat">Threat</button>
+      <button type="button" data-cmd="attack">Attack</button>
+      <button type="button" data-cmd="scare" class="danger">Jump scare</button>
+      <button type="button" data-cmd="power">Power</button>
+      <button type="button" data-cmd="glitch">Glitch</button>
+    </div>
+    <div class="row">
+      <button type="button" data-toggle="autopilot" class="on">Autopilot</button>
+      <button type="button" data-toggle="follow">Cam track</button>
+      <button type="button" data-toggle="sound">Sound</button>
+      <button type="button" data-toggle="bloom" class="on">Bloom</button>
+      <label class="slider">RATE&nbsp;<input id="speed" type="range" min="0.4" max="2.2" step="0.05" value="1" /></label>
+    </div>
+    <p class="hint">drag to orbit &middot; scroll to zoom &middot; keys 1-8 / A C S B</p>
+  </nav>
+</div>
+
+<div id="flash"></div>
+
+<div id="boot">
+  <div class="panel">
+    <h2>ARACHNID <em>MK-0</em></h2>
+    <pre id="bootlog"></pre>
+    <button type="button" id="bootbtn">INITIALIZE</button>
+  </div>
+</div>
+
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>

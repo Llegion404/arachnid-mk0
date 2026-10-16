@@ -1,0 +1,9 @@
+# installed deps — the page itself only needs vendor/, which is committed
+node_modules/
+
+# generated stills: ~2 MB each, regenerate with `npm run shot`
+shots/
+
+# scratch
+*.log
+.DS_Store

@@ -1,0 +1,19 @@
+{
+  "name": "arachnid-mk0",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Procedural 3D robo-prototype spider with IK legs, gait engine and behaviour state machine — runs in the browser on three.js",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8137 --bind 127.0.0.1",
+    "vendor": "node scripts/vendor.mjs",
+    "shot": "node scripts/shot.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.64.1"
+  }
+}

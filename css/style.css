@@ -1,0 +1,234 @@
+:root {
+  --r: 255, 42, 16;
+  --dim: 255, 120, 95;
+  --font: "SFMono-Regular", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: #04050a;
+  color: #c9ccd6;
+  font-family: var(--font);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+/* ---------- vignette / scanline atmosphere over the canvas ---------- */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 35%, rgba(0,0,0,.55) 100%),
+    repeating-linear-gradient(to bottom, rgba(0,0,0,.11) 0 1px, rgba(0,0,0,0) 1px 3px);
+  mix-blend-mode: multiply;
+}
+
+/* ---------- hud ---------- */
+#hud {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px clamp(14px, 3vw, 34px);
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+#title h1 {
+  font-size: clamp(15px, 2.4vw, 26px);
+  font-weight: 500;
+  letter-spacing: .3em;
+  color: #f4f5f8;
+  text-shadow: 0 0 18px rgba(var(--r), .35);
+}
+#title h1 em { font-style: normal; color: rgb(var(--r)); }
+#title .sub {
+  margin-top: 6px;
+  color: rgba(var(--dim), .55);
+  font-size: 10px;
+}
+
+#readout {
+  position: absolute;
+  top: 18px;
+  right: clamp(14px, 3vw, 34px);
+  text-align: right;
+  min-width: 168px;
+}
+#readout div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+#readout span { color: rgba(255, 255, 255, .32); }
+#readout b {
+  font-weight: 500;
+  color: rgb(var(--r));
+  text-shadow: 0 0 12px rgba(var(--r), .5);
+}
+#readout b.warn { color: #ffd451; text-shadow: 0 0 12px rgba(255, 212, 81, .5); }
+
+#controls {
+  pointer-events: auto;
+  margin-top: auto;
+  padding-bottom: 4px;
+}
+#controls .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+}
+
+#controls button {
+  font: inherit;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255, 190, 175, .78);
+  background: rgba(16, 10, 12, .55);
+  border: 1px solid rgba(var(--r), .28);
+  padding: 7px 11px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: color .14s, border-color .14s, background .14s, box-shadow .14s;
+}
+#controls button:hover {
+  color: #fff;
+  border-color: rgba(var(--r), .85);
+  background: rgba(var(--r), .12);
+  box-shadow: 0 0 18px rgba(var(--r), .28) inset, 0 0 12px rgba(var(--r), .12);
+}
+#controls button:active { transform: translateY(1px); }
+#controls button.on {
+  color: #080506;
+  background: rgba(var(--r), .78);
+  border-color: rgba(var(--r), 1);
+  box-shadow: 0 0 20px rgba(var(--r), .35);
+}
+#controls button.danger { border-color: rgba(var(--r), .55); color: #ff6a52; }
+#controls button.danger:hover { background: rgba(var(--r), .28); color: #fff; }
+
+.slider {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, .3);
+  padding-left: 6px;
+}
+.slider input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 96px;
+  height: 2px;
+  background: rgba(var(--r), .35);
+  outline: none;
+  cursor: pointer;
+}
+.slider input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 14px;
+  background: rgb(var(--r));
+  box-shadow: 0 0 10px rgba(var(--r), .8);
+}
+.slider input::-moz-range-thumb {
+  border: 0;
+  border-radius: 0;
+  width: 10px;
+  height: 14px;
+  background: rgb(var(--r));
+}
+
+#controls .hint { color: rgba(255, 255, 255, .22); letter-spacing: .18em; }
+
+/* ---------- fullscreen flash used by the jump scare ---------- */
+#flash {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.95), rgba(255, 40, 16, .75) 45%, rgba(60,0,0,.9));
+  opacity: 0;
+  transition: opacity .09s linear;
+}
+
+/* ---------- boot / init overlay ---------- */
+#boot {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at 50% 50%, #0a0b12 0%, #04050a 60%, #000 100%);
+  transition: opacity .7s ease;
+}
+#boot.hidden { opacity: 0; pointer-events: none; }
+#boot .panel {
+  width: min(560px, 88vw);
+  border: 1px solid rgba(var(--r), .25);
+  padding: clamp(18px, 3vw, 30px);
+  background: rgba(8, 6, 9, .72);
+  box-shadow: 0 0 60px rgba(0, 0, 0, .8), 0 0 40px rgba(var(--r), .07) inset;
+}
+#boot h2 {
+  font-size: clamp(16px, 3vw, 24px);
+  font-weight: 500;
+  letter-spacing: .3em;
+  color: #f2f3f7;
+  text-transform: uppercase;
+}
+#boot h2 em { font-style: normal; color: rgb(var(--r)); }
+#bootlog {
+  margin: 18px 0 20px;
+  min-height: 132px;
+  font-size: 11px;
+  line-height: 1.85;
+  letter-spacing: .08em;
+  color: rgba(190, 220, 200, .72);
+  white-space: pre-wrap;
+}
+#bootlog .bad { color: rgb(var(--r)); }
+#bootbtn {
+  font: inherit;
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  color: rgb(var(--r));
+  background: transparent;
+  border: 1px solid rgba(var(--r), .5);
+  padding: 11px 26px;
+  cursor: pointer;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+#bootbtn:hover { background: rgba(var(--r), .16); color: #fff; }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(var(--r), 0); }
+  50% { box-shadow: 0 0 22px rgba(var(--r), .35); }
+}
+
+@media (max-width: 720px) {
+  #readout { display: none; }
+  #controls button { padding: 6px 8px; font-size: 10px; }
+  .slider { display: none; }
+}
